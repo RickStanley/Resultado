@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace Result.Test;
+namespace Resultado.Test;
 
 public class ResultTests
 {
@@ -122,12 +122,19 @@ public class ResultTests
     }
 
     [Fact]
+    public void Result_WithNull()
+    {
+        var result = Result.Succeed<int?>(null);
+        
+        Assert.False(result.Value.HasValue);
+        Assert.Null(result.Value);
+    }
+
+    [Fact]
     public void Result_WithValue()
     {
         Result<int> result = Result.Succeed(1);
 
-        Example t = new();
-        var res = Result.Succeed<Example>(t);
         var content = result switch
         {
             Result.Success<int> success => success.Value,
