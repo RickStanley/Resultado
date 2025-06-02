@@ -43,7 +43,7 @@ public partial record ValidationError
     /// <example>nameof(BalancesDto.Balance) // Because Balance was negative and it's not allowed.</example>
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Pointer { get; init; }
+    public string? Pointer { get; set; }
 
     /// <summary>
     /// Severity can have multiple flags.
@@ -109,6 +109,20 @@ public interface IFailedResult : IResult
     /// May be useful to trace down a failure's origins.
     /// </summary>
     string? TraceId { get; init; }
+
+    /// <summary>
+    /// A short, human-readable summary of the problem type. It SHOULD NOT change from occurrence to occurrence
+    /// of the problem, except for purposes of localization(e.g., using proactive content negotiation;
+    /// see[RFC7231], Section 3.4).
+    /// <example>You do not have enough credit.</example>
+    /// </summary>
+    string Title { get; init; }
+
+    /// <summary>
+    /// A human-readable explanation specific to this occurrence of the problem.
+    /// <example>Your current balance is 30, but that costs 50.</example>
+    /// </summary>
+    string? Detail { get; init; }
 }
 
 public abstract record Result<T> : Result;
@@ -163,6 +177,11 @@ public partial record Result
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? TraceId { get; init; } = null;
 
+        public required string Title { get; init; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Detail { get; init; }
+
         public Kind Kind
         {
             get => _kind;
@@ -184,6 +203,7 @@ public partial record Result
             init => _errors = value;
         }
 
+        public Failure(string title, string? detail = null) => (Title, Detail) = (title, detail);
         public Failure(string error) => _errors = [error];
         public Failure(IReadOnlyCollection<string> errors) => _errors = errors;
         public Failure(params string[] errors) => _errors = errors;
@@ -198,13 +218,21 @@ public partial record Result
 
     public static Success Succeed(string? message = null, Kind kind = Kind.Ok) => new(message) { Kind = kind };
 
-    public static Failure Fail(string error, Kind kind = Kind.Error) => new(error) { Kind = kind };
-    public static Failure Fail(params string[] errors) => new(errors);
-    public static Failure Fail(params IReadOnlyCollection<string> errors) => new(errors);
-    public static Failure Fail(params ValidationError[] validationErrors) => new(validationErrors);
+    public static Failure Fail(string title, string error, Kind kind = Kind.Error) =>
+        new(error) { Title = title, Kind = kind };
+
+    public static Failure Fail(params string[] errors) => new(errors) { Title = string.Empty };
+    public static Failure Fail(params IReadOnlyCollection<string> errors) => new(errors) { Title = string.Empty };
+
+    public static Failure Fail(params ValidationError[] validationErrors) =>
+        new(validationErrors) { Title = string.Empty };
+
+    public static Failure Fail(string title, ValidationError validationError, Kind kind = Kind.Error) =>
+        new(validationError) { Title = title, Kind = kind };
 
     public static Failure Fail(ValidationError validationError, Kind kind = Kind.Error) =>
-        new(validationError) { Kind = kind };
+        new(validationError) { Title = string.Empty, Kind = kind };
+
 
     protected Result()
     {
