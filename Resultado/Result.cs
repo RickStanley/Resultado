@@ -222,7 +222,6 @@ public partial record Result
         new(error) { Title = title, Kind = kind };
 
     public static Failure Fail(params string[] errors) => new(errors) { Title = string.Empty };
-    public static Failure Fail(params IReadOnlyCollection<string> errors) => new(errors) { Title = string.Empty };
 
     public static Failure Fail(params ValidationError[] validationErrors) =>
         new(validationErrors) { Title = string.Empty };

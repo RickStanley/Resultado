@@ -106,14 +106,6 @@ public class ResultTests
     }
 
     [Fact]
-    public void Result_Failure_ConstructsWithReadOnlyStringCollection()
-    {
-        var failure = Result.Fail(new ReadOnlyCollection<string>(["Error 1", "Error 2"]));
-
-        Assert.IsType<Result.Failure>(failure);
-    }
-
-    [Fact]
     public void Result_Failure_ConstructsWithValidationError()
     {
         var failure = Result.Fail(new ValidationError("Some error"));
