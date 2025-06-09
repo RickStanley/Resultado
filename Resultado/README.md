@@ -2,8 +2,6 @@
 
 ## Como usar
 
-Instale o pacote do _feed_: https://dev.azure.com/StixFidelidade/Projetos/_artifacts/feed/Stix@Local/NuGet/Resultado/
-
 Use:
 
 ```csharp
