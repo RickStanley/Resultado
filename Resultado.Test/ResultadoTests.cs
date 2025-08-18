@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-namespace Resultado.Test;
+﻿namespace Resultado.Test;
 
 public class ResultTests
 {
@@ -64,7 +62,7 @@ public class ResultTests
         switch (result)
         {
             case Result.Success<Example> success:
-                Assert.Equal(2, success.Value?.Num);
+                Assert.Equal(2, success.Value.Num);
                 break;
             case Result.Failure:
                 Assert.Fail("Result should not have failed.");
@@ -82,7 +80,7 @@ public class ResultTests
 
         var isSuccess = result switch
         {
-            Result.Success<Example> success => success.Value?.Num == 2,
+            Result.Success<Example> success => success.Value.Num == 2,
             _ => false
         };
 
@@ -134,7 +132,18 @@ public class ResultTests
         };
 
         Assert.Equal(1, content);
-        Assert.IsAssignableFrom<Result.Success<int>>(result);
+        Assert.IsType<Result.Success<int>>(result, exactMatch: false);
+    }
+
+    [Fact]
+    public void Result_FailureCanBeImplicitlyConverted()
+    {
+        Result<Example> example = new Result.Failure
+        {
+            Title = "Test"
+        };
+        
+        Assert.IsAssignableFrom<Result.Failure<Example>>(example);
     }
 
     private record Example(int Num = 2);

@@ -3,7 +3,7 @@
 namespace Resultado.Web;
 
 // Inspirado em: https://github.com/ardalis/Result/issues/193
-public static class ResultWeb
+public static class ResultadoWeb
 {
     private const string StatusCodeDocumentationLinkBase =
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status";

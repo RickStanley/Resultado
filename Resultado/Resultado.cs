@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace Resultado;
@@ -43,7 +44,7 @@ public partial record ValidationError
     /// <example>nameof(BalancesDto.Balance) // Because Balance was negative and it's not allowed.</example>
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Pointer { get; set; }
+    public string? Pointer { get; init; }
 
     /// <summary>
     /// Severity can have multiple flags.
@@ -125,7 +126,10 @@ public interface IFailedResult : IResult
     string? Detail { get; init; }
 }
 
-public abstract record Result<T> : Result;
+public abstract record Result<T> : Result
+{
+    public static implicit operator Result<T>(Failure failure) => new Failure<T>(failure);
+}
 
 public partial record Result
 {
@@ -167,6 +171,65 @@ public partial record Result
 
         public static bool IsSuccess => true;
     }
+
+    public partial record Failure<T> : Result<T>, IFailedResult
+    {
+        private readonly IReadOnlyCollection<string> _errors = ReadOnlyCollection<string>.Empty;
+        private readonly Kind _kind = Kind.Error;
+
+        public IReadOnlyCollection<ValidationError> ValidationErrors { get; init; } =
+            ReadOnlyCollection<ValidationError>.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TraceId { get; init; }
+
+        public required string Title { get; init; } = string.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Detail { get; init; }
+
+        public Kind Kind
+        {
+            get => _kind;
+            init => _kind = value >= Kind.Error
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(value),
+                    "Cannot set non-error status to a failure result.");
+        }
+
+        public static bool IsSuccess => false;
+
+        public IReadOnlyCollection<string> Errors
+        {
+            get
+            {
+                return _errors.Count > 0 ? _errors :
+                    ValidationErrors.Count > 0 ? ValidationErrors.Select(va => va.Detail).ToArray() : [];
+            }
+            init => _errors = value;
+        }
+
+        public Failure(string title, string? detail = null) => (Title, Detail) = (title, detail);
+        public Failure(string error) => _errors = [error];
+        public Failure(IReadOnlyCollection<string> errors) => _errors = errors;
+        public Failure(params string[] errors) => _errors = errors;
+
+        public Failure(params ValidationError[] validationErrors) =>
+            (ValidationErrors, Kind) = (validationErrors, Kind.Invalid);
+
+        public Failure(ValidationError validationError) => (ValidationErrors, Kind) = ([validationError], Kind.Invalid);
+
+        [SetsRequiredMembers]
+        public Failure(Failure failure)
+        {
+            ValidationErrors = failure.ValidationErrors;
+            Kind = failure.Kind;
+            Title = failure.Title;
+            Detail = failure.Detail;
+            _errors = failure.Errors;
+        }
+    }
+
 
     public partial record Failure : Result, IFailedResult
     {
@@ -212,6 +275,10 @@ public partial record Result
             (ValidationErrors, Kind) = (validationErrors, Kind.Invalid);
 
         public Failure(ValidationError validationError) => (ValidationErrors, Kind) = ([validationError], Kind.Invalid);
+
+        public Failure()
+        {
+        }
     }
 
     public static Success<T> Succeed<T>(T value, Kind kind = Kind.Ok) => new(value) { Kind = kind };
