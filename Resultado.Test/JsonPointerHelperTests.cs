@@ -11,9 +11,11 @@ public class JsonPointerHelperTests
     private record Example2(string Value);
 
     private record Example3(string Value);
+    
+    private record Example4([property: JsonPropertyName("Value")] string Value);
 
     [Fact]
-    public void Test1()
+    public void GetJsonPointer_ReturnsPointer()
     {
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonPointerHelper.GetJsonPointer<Example>(t => t.Value, options);
@@ -22,7 +24,7 @@ public class JsonPointerHelperTests
     }
 
     [Fact]
-    public void Test2()
+    public void GetJsonPointer_WhenNested_ReturnsUriPath()
     {
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonPointerHelper.GetJsonPointer<Example>(t => t.Nested.Value, options);
@@ -31,7 +33,16 @@ public class JsonPointerHelperTests
     }
 
     [Fact]
-    public void Test3()
+    public void GetJsonPointer_WhenPropertyNameOverriden_RespectsUserPreference()
+    {
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var result = JsonPointerHelper.GetJsonPointer<Example4>(t => t.Value, options);
+
+        Assert.Equal("/Value", result);
+    }
+    
+    [Fact]
+    public void GetJsonPointer_WhenNestedArray_RetrievesIncludesIndex()
     {
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var result = JsonPointerHelper.GetJsonPointer<Example>(t => t.Nested2[0].Value, options);

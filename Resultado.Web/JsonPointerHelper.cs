@@ -121,12 +121,12 @@ public static class JsonPointerHelper
 /// <summary>
 /// Valores que especificam a representação de um ponteiro JSON.
 /// </summary>
-public enum JsonPointerRepresentation
+public enum JsonPointerRepresentation : ushort
 {
     /// <summary>
     /// A representação especificada em RFC 6901 §3.
     /// </summary>
-    Normal = 0,
+    Normal,
 
     /// <summary>
     /// A representação cadeia de caracteres JSON especificada  em RFC 6901 §5
